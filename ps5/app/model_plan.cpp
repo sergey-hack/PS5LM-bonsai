@@ -216,16 +216,6 @@ ModelInfo parse_model_info(Reader r, const std::string & path, uint64_t file_byt
     if (!strs["general.name"].empty()) {
         m.name = strs["general.name"];
     }
-    // PrismML's own packings of Bonsai models (their fork's types 142 and 143,
-    // file types 141 and 143), which this llama.cpp refuses at load.
-    if (ints.count("prism.hadamard.version") && ints.count("general.file_type")) {
-        const uint64_t ftype = ints["general.file_type"];
-        if (ftype == 141 || ftype == 143) {
-            m.error = ftype == 141 ? "PrismML's PQ2_0: convert it to Q2_0 on a PC with scripts/bonsai-pq2-to-q2.py"
-                                   : "PrismML's PTQ1_0, which llama.cpp cannot load; get its Q2_0 file";
-            return m;
-        }
-    }
     const std::string a = m.arch + ".";
     m.decision = strs[a + "decision.type"];
     auto num = [&](const std::string & k, uint64_t def = 0) {

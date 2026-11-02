@@ -1,5 +1,6 @@
 name: Fleet validation (not PS5 hardware)
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - 'fleet/**'
@@ -16,7 +17,7 @@ on:
       - 'third_party/llama.cpp'
       - '.github/workflows/fleet-host.yml'
   push:
-    branches: [main, 'fleet/**']
+    branches: [main, prism-lm, 'fleet/**']
     paths:
       - 'fleet/**'
       - 'patches/*.patch'

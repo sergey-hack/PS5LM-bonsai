@@ -79,8 +79,7 @@ int main(int argc, char ** argv) {
     assert(w.n_ff == 12288 && has_args(w64, "-ub", "64") && has_args(w512, "-ub", "512") && has_args(w512, "-b", "512"));
     assert(w512.reserve_gib - w64.reserve_gib > 0.18 && w512.reserve_gib - w64.reserve_gib < 0.21);
 
-    // Bonsai 2: upstream's Q2_0 loads with its preset (64k at most, PrismML's
-    // sampling); PrismML's own PQ2_0 and PTQ1_0 say what to do instead.
+    // Bonsai 2: Q2_0, PQ2_0, and PTQ1_0 all load with their preset (64k at most, PrismML's sampling).
     const auto bonsai = [](uint32_t ftype) {
         Gguf g;
         g.kv("general.architecture", "qwen35").kv("general.name", "Ternary-Bonsai-2-27B")
@@ -97,9 +96,13 @@ int main(int argc, char ** argv) {
     const ps5lm::Plan bpl = ps5lm::plan_model(b, 12.0, 131072);
     assert(bpl.fits && bpl.ctx == 65536 && has_args(bpl, "--min-p", "0.05"));
     const ps5lm::ModelInfo pq = ps5lm::read_model_header("Ternary-Bonsai-2-27B-PQ2_0.gguf", bonsai(141), 7206168928ull);
-    assert(!pq.ok && pq.error.find("bonsai-pq2-to-q2.py") != std::string::npos);
+    assert(pq.ok);
+    const ps5lm::Plan pqpl = ps5lm::plan_model(pq, 12.0, 131072);
+    assert(pqpl.fits && pqpl.ctx == 65536 && has_args(pqpl, "--min-p", "0.05"));
     const ps5lm::ModelInfo pt = ps5lm::read_model_header("Ternary-Bonsai-2-27B-PTQ1_0.gguf", bonsai(143), 5946648928ull);
-    assert(!pt.ok && pt.error.find("PTQ1_0") != std::string::npos);
+    assert(pt.ok);
+    const ps5lm::Plan ptpl = ps5lm::plan_model(pt, 12.0, 131072);
+    assert(ptpl.fits && ptpl.ctx == 65536 && has_args(ptpl, "--min-p", "0.05"));
 
     // Sliding-window attention (#57): Spark-X2.6 4B's header. 27 of its 36
     // layers keep a 512-token window, so 256k fits; counted as full attention
